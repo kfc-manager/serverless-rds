@@ -101,12 +101,12 @@ resource "aws_cloudwatch_event_rule" "main" {
   description = "Event gets triggered when there is no traffic to the RDS instance"
 
   event_pattern = jsonencode({
-    detail-type = ["RDSTraffic CloudWatch alarm state change"]
+    detail-type = ["CloudWatch Alarm State Change"]
     source      = ["aws.cloudwatch"]
     resources   = [aws_cloudwatch_metric_alarm.main.arn]
     detail = {
       state = {
-        value = ["INSUFFICIENT_DATA"]
+        value = ["ALARM"]
       }
     }
   })
@@ -117,4 +117,18 @@ resource "aws_cloudwatch_event_rule" "main" {
     Type        = "Serverless RDS"
     Description = "Event that triggers the Lambda Stop Function when the Alarm state changes"
   }
+}
+
+resource "aws_cloudwatch_event_target" "main" {
+  rule      = aws_cloudwatch_event_rule.main.name
+  target_id = "${lower(var.project)}-serverless-rds-stop"
+  arn       = var.lambda_arn
+}
+
+resource "aws_lambda_permission" "main" {
+  statement_id  = "AllowExecutionFromCloudWatch"
+  action        = "lambda:InvokeFunction"
+  function_name = var.lambda_arn
+  principal     = "events.amazonaws.com"
+  source_arn    = aws_cloudwatch_event_rule.main.arn
 }

@@ -45,7 +45,7 @@ module "bastion_host" {
   subnet_id            = module.network.public_subnet_ids[0]
   db_security_group_id = module.database.db_security_group_id
   instance_type        = "t2.micro"
-  public_key           = file("~/.ssh/ec2-instance.pub")
+  public_key           = file("~/.ssh/ec2-instance.pub") # path to public SSH key for Bastion Host access
   allowed_ip_addresses = ["0.0.0.0/0"]
 }
 
@@ -82,6 +82,6 @@ module "monitor" {
   env                               = local.env
   bastion_host_network_interface_id = module.bastion_host.network_interface_id
   port                              = local.db_port
-  trigger_period                    = 3
+  trigger_period                    = 20 # in minutes
   lambda_arn                        = module.stop_rds_function.arn
 }
