@@ -1,4 +1,4 @@
-# Serverless RDS :magic_wand:
+# Serverless RDS :magic_wand: :rabbit2: :tophat:
 
 This AWS infrastructure configured with Terraform is an alternative to Amazon's serverless database solution Aurora. The idea originated when I was working with a colleague on a project where we were running a lot of scripts to set up and gather a dataset. We got ourselves a RDS instance, in the process of building the dataset we were running a script about once a week and the rest of the time the RDS instance was not used or accessed in any way. With very little usage of the actual compute resource we were still paying for the whole month. Even though AWS provides a very easy way to shut down the instance through the console, it only gets stopped temporarily for a week. With that on our mind we had to think about when the instance was unused but still active and manually make changes to it's state, which made me want to automize the process and build my own solution as Aurora can also get very pricy if not monitored correctly.
 
@@ -22,7 +22,7 @@ This AWS infrastructure configured with Terraform is an alternative to Amazon's 
 ### &rarr; Events :boom:
 
 - Scheduled event gets triggered in specified time interval (default 30 min) and invokes stop lambda function
-- State change event gets triggered when the SSH traffic state goes into "ALARM" state and invoked start lambda function
+- State change event gets triggered when the SSH traffic state goes into "ALARM" state and invokes start lambda function
 
 ### &rarr; Lambdas :wrench:
 
@@ -30,3 +30,12 @@ This AWS infrastructure configured with Terraform is an alternative to Amazon's 
 - Start function starts the RDS instance if it is not already in "AVAILABLE" state
 
 ## Getting started :rocket:
+
+### &rarr; Configuration :page_facing_up:
+
+- Name of database and master password are set through variables when you use `terraform apply`
+- Rest of parameters can be set in the `main.tf` file and should be set before using `terraform apply`
+- `t2.micro` might not suffice for the bastion host if you want to run scripts on it and not only use it for forwarding
+- If you don't want to use the public ECR repositories I provide or they should unexpectly be unavailable, you have to build the images for the lambdas locally, push them in your own ECR repositories and specify the names of the repositories in the `function` modules of `main.tf` 
+
+After being with the configuration done you have to log in with the AWS CLI. Then you can run `terraform apply` and the infrastructure should be build up. This may take a while as initializing the RDS instance takes about 4 minutes.
