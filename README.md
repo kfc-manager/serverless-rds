@@ -36,6 +36,6 @@ This AWS infrastructure configured with Terraform is an alternative to Amazon's 
 - Name of database and master password are set through variables when you use `terraform apply`
 - Rest of parameters can be set in the `main.tf` file and should be set before using `terraform apply`
 - `t2.micro` might not suffice for the bastion host if you want to run scripts on it and not only use it for forwarding
-- If you don't want to use the public ECR repositories I provide or they should unexpectly be unavailable, you have to build the images for the lambdas locally, push them in your own ECR repositories and specify the names of the repositories in the `function` modules of `main.tf` 
+- Build the images for the lambdas locally, push them in ECR repositories and specify the names of the repositories in the `function` modules of `main.tf` 
 
 After being with the configuration done you have to log in with the AWS CLI. Then you can run `terraform apply` and the infrastructure should be build up. This may take a while as initializing the RDS instance takes about 4 minutes.
