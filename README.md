@@ -4,7 +4,7 @@ This AWS infrastructure configured with Terraform is an alternative to Amazon's 
 
 ## How it works :thinking:
 
-![alt text](https://github.com/kfc-manager/serverless-rds/blob/main/assets/serverless-rds.png?raw=true)
+![alt text](https://github.com/kfc-manager/serverless-rds/blob/main/assets/full_architecture_transparent.png?raw=true)
 
 ### &rarr; Network :globe_with_meridians:
 
