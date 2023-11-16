@@ -6,4 +6,27 @@ This AWS infrastructure configured with Terraform is an alternative to Amazon's 
 
 ![alt text](https://github.com/kfc-manager/serverless-rds/blob/main/assets/serverless-rds.png?raw=true)
 
+### &rarr; Network
+
+- VPC covers two availability zones in set region in order to build a subent group with two private subnets, which fullfills the AWS Multi AZ requirement to create a RDS instance.
+- Secutiry groups are set to allow bastion host to communicate with RDS instance over specified database port
+- Bastion host can be SSH tunneled into from outside user
+
+### &rarr; Monitor / Logging
+
+- FlowLogs log traffic in network of database and bastion host SSH in two CloudWatch log groups
+- Metrics are created to define amount of database traffic and SSH traffic
+- Database traffic state goes into "ALARM" when traffic drops below 1 in evaluation time period
+- SSH traffic state goes into "ALARM" when traffic is greater than 0 in evaluation time period
+
+### &rarr; Events
+
+- Scheduled event gets triggered in specified time interval (default 30 min) and invokes stop lambda function
+- State cahnge event gets triggered when the SSH traffic state goes into "ALARM" state and invoked start lambda function
+
+### &rarr; Lambdas
+
+- Stop function checks the database traffic state and if in "ALARM" state stops the RDS instance
+- Start function starts the RDS instance if it is not already in "AVAILABLE" state
+
 ## Getting started
