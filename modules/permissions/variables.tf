@@ -23,27 +23,12 @@ variable "account_id" {
   type        = string
 }
 
-variable "function_name" {
-  description = "Name of Lambda function"
+variable "rds_arn" {
+  description = "ARN of RDS instance to be stopped and started"
   type        = string
 }
 
-variable "ecr_image_tag" {
-  description = "Tag of image in ECR repository which Lambda function executes"
+variable "metric_alarm_arn" {
+  description = "ARN of metric alarm for RDS traffic"
   type        = string
-}
-
-variable "description" {
-  description = "Description what Lambda function does"
-  type        = string
-}
-
-variable "role_arn" {
-  description = "ARN of IAM role assigned to Lambda function"
-  type        = string
-}
-
-variable "env_variables" {
-  description = "Environment variables set in Lambda function"
-  type        = map(string)
 }

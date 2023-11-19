@@ -6,24 +6,19 @@ data "aws_ami" "ubuntu" {
     values = ["ubuntu/images/hvm-ssd/ubuntu-focal-20.04-amd64-server-*"]
   }
 
-  filter {
-    name   = "virtualization-type"
-    values = ["hvm"]
-  }
-
   owners = ["099720109477"] # Canonical
 }
 
 resource "aws_security_group" "main" {
-  name        = "Inbound Bastion Host SSH Security Group"
-  description = "Allow SSH tunnel connection to the bastion host"
+  name        = "${var.project_tag}-serverless-rds-bastion-host"
+  description = "Allow SSH tunnel connection to bastion host"
   vpc_id      = var.vpc_id
 
   tags = {
     Project     = var.project
     Environment = var.env
     Type        = "Serverless RDS"
-    Description = "SSH Access to Bastion Host"
+    Description = "SSH access to bastion host"
   }
 }
 
@@ -40,11 +35,12 @@ resource "aws_network_interface" "main" {
   subnet_id       = var.subnet_id
   security_groups = [var.db_security_group_id, aws_security_group.main.id]
 
+
   tags = {
     Project     = var.project
     Environment = var.env
     Type        = "Serverless RDS"
-    Description = "Bastion Host Network Interface"
+    Description = "Network interface of bastion host"
   }
 }
 
@@ -54,8 +50,8 @@ resource "aws_eip" "main" {
 }
 
 resource "aws_key_pair" "main" {
-  key_name   = "${lower(var.project)}-serverless-rds-bastion-host-key"
-  public_key = var.public_key
+  key_name   = "${var.project_tag}serverless-rds-bastion-host-key"
+  public_key = var.public_ssh_key
 }
 
 resource "aws_instance" "main" {
@@ -72,8 +68,6 @@ resource "aws_instance" "main" {
     Project     = var.project
     Environment = var.env
     Type        = "Serverless RDS"
-    Description = "Bastion Host to expose Database publicly"
+    Description = "Bastion host as entrypoint to database from public internet"
   }
 }
-
-

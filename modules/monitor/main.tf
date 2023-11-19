@@ -1,3 +1,7 @@
+locals {
+  rds_metric_alarm_name = "${var.project_tag}-serverless-rds-no-database-traffic"
+}
+
 data "aws_iam_policy_document" "assume_role" {
   statement {
     effect = "Allow"
@@ -11,7 +15,19 @@ data "aws_iam_policy_document" "assume_role" {
   }
 }
 
-data "aws_iam_policy_document" "ssh_log" {
+resource "aws_cloudwatch_log_group" "main" {
+  name              = "${var.project_tag}-serverless-rds-traffic"
+  retention_in_days = 1
+
+  tags = {
+    Project     = var.project
+    Environment = var.env
+    Type        = "Serverless RDS"
+    Description = "Log group to log traffic in network"
+  }
+}
+
+data "aws_iam_policy_document" "traffic_log" {
   statement {
     effect = "Allow"
 
@@ -23,70 +39,58 @@ data "aws_iam_policy_document" "ssh_log" {
       "logs:DescribeLogStreams",
     ]
 
-    resources = ["*"]
-  }
-}
-
-resource "aws_cloudwatch_log_group" "main" {
-  name              = "${lower(var.project)}-serverless-rds-traffic"
-  retention_in_days = 1
-
-  tags = {
-    Project     = var.project
-    Environment = var.env
-    Type        = "Serverless RDS"
-    Description = "CloudWatch Log Group to log Traffic of the Bastion Host"
+    resources = ["${aws_cloudwatch_log_group.main.arn}:*"]
   }
 }
 
 resource "aws_iam_role" "main" {
-  name               = "${lower(var.project)}-serverless-rds-log"
+  name               = "${var.project_tag}-serverless-rds-traffic-log"
   assume_role_policy = data.aws_iam_policy_document.assume_role.json
 
   inline_policy {
-    name   = "cloudwatch-access"
-    policy = data.aws_iam_policy_document.ssh_log.json
+    name   = "cloudwatch-log-group-access"
+    policy = data.aws_iam_policy_document.traffic_log.json
   }
 
   tags = {
     Project     = var.project
     Environment = var.env
     Type        = "Serverless RDS"
-    Description = "IAM Role to allow Flow Log to push logs to CloudWatch"
+    Description = "IAM role to allow flow log to alter CloudWatch log group"
   }
 }
 
 resource "aws_flow_log" "main" {
-  eni_id                   = var.bastion_host_network_interface_id
+  eni_id                   = var.network_interface_id
   traffic_type             = "ACCEPT"
   iam_role_arn             = aws_iam_role.main.arn
   log_destination          = aws_cloudwatch_log_group.main.arn
   max_aggregation_interval = 60
 }
 
-resource "aws_cloudwatch_log_metric_filter" "main" {
+resource "aws_cloudwatch_log_metric_filter" "database" {
   name           = "RDSTraffic"
-  pattern        = var.port
+  pattern        = var.db_port
   log_group_name = aws_cloudwatch_log_group.main.name
 
   metric_transformation {
     name          = "RDSTraffic"
-    namespace     = "RDSMetric"
+    namespace     = "ServerlessRDSMetric"
     value         = "1"
     default_value = 0
   }
 }
 
-resource "aws_cloudwatch_metric_alarm" "main" {
-  alarm_name          = "no-rds-traffic"
+resource "aws_cloudwatch_metric_alarm" "database" {
+  alarm_name          = local.rds_metric_alarm_name
+  alarm_description   = "This metric monitors if there is traffic to RDS instance"
   comparison_operator = "LessThanThreshold"
   evaluation_periods  = 1
-  period              = var.trigger_period * 60
-  metric_name         = aws_cloudwatch_log_metric_filter.main.name
-  namespace           = "RDSMetric"
+  period              = 1500
+  metric_name         = aws_cloudwatch_log_metric_filter.database.name
+  namespace           = "ServerlessRDSMetric"
   statistic           = "Sum"
   threshold           = 1
-  alarm_description   = "This metric monitors if there is traffic to the RDS instance"
 
   tags = {
     Project     = var.project
@@ -96,39 +100,34 @@ resource "aws_cloudwatch_metric_alarm" "main" {
   }
 }
 
-resource "aws_cloudwatch_event_rule" "main" {
-  name        = "no-rds-traffic"
-  description = "Event gets triggered when there is no traffic to the RDS instance"
+resource "aws_cloudwatch_log_metric_filter" "ssh" {
+  name           = "SSHTraffic"
+  pattern        = 22
+  log_group_name = aws_cloudwatch_log_group.main.name
 
-  event_pattern = jsonencode({
-    detail-type = ["CloudWatch Alarm State Change"]
-    source      = ["aws.cloudwatch"]
-    resources   = [aws_cloudwatch_metric_alarm.main.arn]
-    detail = {
-      state = {
-        value = ["ALARM"]
-      }
-    }
-  })
+  metric_transformation {
+    name          = "SSHTraffic"
+    namespace     = "ServerlessRDSMetric"
+    value         = "1"
+    default_value = 0
+  }
+}
+
+resource "aws_cloudwatch_metric_alarm" "ssh" {
+  alarm_name          = "${var.project_tag}-serverless-rds-ssh-traffic"
+  alarm_description   = "This metric monitors if there is SSH traffic to bastion host"
+  comparison_operator = "GreaterThanThreshold"
+  evaluation_periods  = 1
+  period              = 60
+  metric_name         = aws_cloudwatch_log_metric_filter.ssh.name
+  namespace           = "ServerlessRDSMetric"
+  statistic           = "Sum"
+  threshold           = 0
 
   tags = {
     Project     = var.project
     Environment = var.env
     Type        = "Serverless RDS"
-    Description = "Event that triggers the Lambda Stop Function when the Alarm state changes"
+    Description = "Alarm for SSHTraffic metric filter"
   }
-}
-
-resource "aws_cloudwatch_event_target" "main" {
-  rule      = aws_cloudwatch_event_rule.main.name
-  target_id = "${lower(var.project)}-serverless-rds-stop"
-  arn       = var.lambda_arn
-}
-
-resource "aws_lambda_permission" "main" {
-  statement_id  = "AllowExecutionFromCloudWatch"
-  action        = "lambda:InvokeFunction"
-  function_name = var.lambda_arn
-  principal     = "events.amazonaws.com"
-  source_arn    = aws_cloudwatch_event_rule.main.arn
 }

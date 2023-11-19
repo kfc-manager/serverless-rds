@@ -13,13 +13,17 @@ variable "env" {
   type        = string
 }
 
-variable "network_interface_id" {
-  description = "ID of network interface which traffic needs to be monitored"
+variable "ssh_metric_alarm_arn" {
+  description = "ARN of SSH traffic metric alarm"
   type        = string
 }
 
-variable "db_port" {
-  description = "Port on which database of RDS instance listens on"
-  type        = number
+variable "start_lambda_arn" {
+  description = "ARN of start RDS Lambda function"
+  type        = string
 }
 
+variable "stop_lambda_arn" {
+  description = "ARN of stop RDS Lambda function"
+  type        = string
+}

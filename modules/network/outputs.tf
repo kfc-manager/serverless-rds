@@ -4,11 +4,12 @@ output "id" {
 }
 
 output "public_subnet_ids" {
-  description = "IDs of the Public Subnets"
+  description = "List of IDs of public subnets"
   value       = aws_subnet.public.*.id
 }
 
 output "private_subnet_group_name" {
-  description = "Name of Private Subnet Group"
+  description = "Name of private subnet group"
   value       = aws_db_subnet_group.private.name
 }
+

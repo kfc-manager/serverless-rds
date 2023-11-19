@@ -1,69 +1,69 @@
-variable "identifier" {
-  description = "Identifier of the RDS Instance"
-  type        = string
-}
-
-variable "vpc_id" {
-  description = "ID of the Main VPC"
+variable "project_tag" {
+  description = "Project tag functioning as identifier for resources"
   type        = string
 }
 
 variable "project" {
-  description = "Project name"
+  description = "Full project name"
   type        = string
 }
 
 variable "env" {
-  description = "Environment"
+  description = "Environment e.g. production or development"
+  type        = string
+}
+
+variable "vpc_id" {
+  description = "ID of main VPC"
   type        = string
 }
 
 variable "allocated_storage" {
-  description = "Storage size of the Database"
-  type        = number
+  description = "Storage size of the database"
+  type        = string
 }
 
 variable "instance_class" {
-  description = "Instance class of the RDS Instance"
+  description = "Instance class of RDS instance"
   type        = string
 }
 
 variable "db_name" {
-  description = "Name of the Database"
+  description = "Name of database"
   type        = string
 }
 
 variable "db_username" {
-  description = "Username of the master user in the Database"
+  description = "Username of master user in database"
   type        = string
 }
 
 variable "db_password" {
-  description = "Password of the master user in the Database"
+  description = "Password of master user in database"
   type        = string
 }
 
-variable "db_subnet_group_name" {
-  description = "Subnet Group name in which the RDS Instance operates in"
+variable "subnet_group_name" {
+  description = "Name of subnet group in which RDS instance lives in"
   type        = string
 }
 
 variable "db_port" {
-  description = "Port on which the database of the RDS Instance listens on"
+  description = "Port on which RDS instance listens on"
   type        = number
 }
 
 variable "db_engine" {
-  description = "Engine on which the database of the RDS Instance runs on"
+  description = "Engine on which database of RDS instance runs on"
   type        = string
 }
 
 variable "db_engine_version" {
-  description = "Version of the engine on which the database of the RDS Instance runs on"
+  description = "Version of engine on which database of RDS instance runs on"
   type        = string
 }
 
 variable "skip_final_snapshot" {
-  description = "Flag for creating a final snapshot before database deletion"
+  description = "Flag for wether or not creating a final snapshot before database deletion"
   type        = bool
 }

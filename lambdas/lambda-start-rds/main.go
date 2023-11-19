@@ -14,11 +14,11 @@ import (
 func handler(
 	ctx context.Context,
 ) error {
-	awsSesssion := session.Must(session.NewSession(&aws.Config{
+	awsSession := session.Must(session.NewSession(&aws.Config{
 		Region: aws.String(os.Getenv("REGION")),
 	}))
-	serviceClient := rds.New(awsSesssion)
-	instanceID := os.Getenv("RDS_IDENTIFIER")
+	serviceClient := rds.New(awsSession)
+	instanceID := os.Getenv("RDS_ID")
 
 	statusInput := &rds.DescribeDBInstancesInput{
 		DBInstanceIdentifier: aws.String(instanceID),
@@ -27,8 +27,7 @@ func handler(
 	if err != nil {
 		return err
 	}
-	if len(result.DBInstances) > 0 {
-	} else {
+	if len(result.DBInstances) == 0 {
 		return errors.New("Could not access DB Instances state")
 	}
 	status := result.DBInstances[0].DBInstanceStatus
